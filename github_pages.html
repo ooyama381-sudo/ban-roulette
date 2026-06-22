@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>THE CASINO CHALLENGE — 自制心の高レート・ベット</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #090a0f;
+      --table-felt: #073a1e;
+      --felt-gradient: radial-gradient(circle, #0e5c32 0%, #073a1e 70%, #031c0e 100%);
+      --surface: #151821;
+      --surface-card: #1d212f;
+      --border-gold: #d4af37;
+      --gold-gradient: linear-gradient(135deg, #f3e5ab 0%, #d4af37 50%, #aa7c11 100%);
+      --gold-glow: 0 0 12px rgba(212, 175, 55, 0.4);
+      --red-casino: #e01b22;
+      --red-gradient: linear-gradient(135deg, #ff4d4d 0%, #b30006 100%);
+      --green-casino: #00e676;
+      --green-gradient: linear-gradient(135deg, #69f0ae 0%, #00c853 100%);
+      --text-light: #f5f6f8;
+      --text-muted: #8a90a6;
+      --radius-lg: 16px;
+      --radius-md: 10px;
+    }
+
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      background: var(--bg);
+      color: var(--text-light);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    .serif {
+      font-family: 'Cinzel', 'Noto Sans JP', serif;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── Header ── */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: rgba(15, 18, 27, 0.9);
+      backdrop-filter: blur(8px);
+      border-bottom: 2px solid #202433;
+      padding: 14px 20px;
+    }
+    .header-inner {
+      max-width: 480px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      font-size: 18px;
+      font-weight: 800;
+      background: var(--gold-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+    .header-btns {
+      display: flex;
+      gap: 8px;
+    }
+    .icon-btn {
+      background: #1b1f2e;
+      border: 1px solid #2d334a;
+      cursor: pointer;
+      color: var(--text-light);
+      padding: 10px;
+      border-radius: var(--radius-md);
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .icon-btn:hover {
+      border-color: var(--border-gold);
+      box-shadow: var(--gold-glow);
+      transform: translateY(-1px);
+    }
+    .icon-btn svg { width: 18px; height: 18px; }
+
+    /* ── Main Layout ── */
+    main {
+      flex: 1;
+      max-width: 480px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* ── Casino Table Screen ── */
+    .casino-table {
+      background: var(--felt-gradient);
+      border: 6px solid #1a150d;
+      outline: 2px solid var(--border-gold);
+      border-radius: 24px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      box-shadow: inset 0 0 30px rgba(0,0,0,0.8), 0 10px 25px rgba(0,0,0,0.7);
+      position: relative;
+    }
+    
+    /* Casino Brass Deco */
+    .casino-table::before {
+      content: '';
+      position: absolute;
+      top: 6px; left: 6px; right: 6px; bottom: 6px;
+      border: 1px dashed rgba(212, 175, 55, 0.25);
+      border-radius: 18px;
+      pointer-events: none;
+    }
+
+    /* ── Visual Roulette Wheel Container ── */
+    .roulette-container {
+      position: relative;
+      width: 240px;
+      height: 240px;
+      margin: 10px 0;
+      border-radius: 50%;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    /* Center pin / Marker */
+    .roulette-marker {
+      position: absolute;
+      top: -12px;
+      z-index: 10;
+      width: 24px;
+      height: 28px;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+    }
+    
+    #rouletteWheel {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 8px solid #1c1308;
+      box-shadow: inset 0 0 15px rgba(0,0,0,0.9), 0 0 0 4px var(--border-gold);
+      transition: transform 4s cubic-bezier(0.1, 0.8, 0.1, 1);
+    }
+
+    .wheel-center-cone {
+      position: absolute;
+      width: 44px;
+      height: 44px;
+      background: radial-gradient(circle, #fcfaf2 0%, #d4af37 60%, #806000 100%);
+      border: 2px solid #fff;
+      border-radius: 50%;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: bold;
+      color: #000;
+      z-index: 5;
+    }
+
+    /* Screen/Display */
+    .table-display {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      text-align: center;
+      min-height: 90px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+    }
+    .display-status {
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      color: var(--border-gold);
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+    .display-text {
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.5;
+      color: #fff;
+      text-shadow: 0 0 8px rgba(255,255,255,0.3);
+    }
+
+    /* ── Duration & Controls Section ── */
+    .bet-setup {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .setup-title {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-align: center;
+      margin-bottom: 8px;
+      letter-spacing: 0.1em;
+    }
+    
+    /* Premium Days Selector */
+    .duration-selector {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .duration-btn {
+      background: #151821;
+      border: 1px solid #30364d;
+      color: var(--text-light);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      transition: all 0.15s ease;
+    }
+    .duration-btn:hover {
+      border-color: var(--border-gold);
+      color: var(--border-gold);
+    }
+    .duration-value-display {
+      flex: 1;
+      text-align: center;
+      background: rgba(0,0,0,0.5);
+      border-radius: var(--radius-sm);
+      padding: 6px;
+      border: 1px solid #202433;
+    }
+    .duration-days {
+      font-size: 18px;
+      font-weight: 900;
+      color: var(--border-gold);
+    }
+    .duration-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    /* Quick select buttons */
+    .quick-days {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      margin-bottom: 4px;
+    }
+    .quick-day-btn {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-muted);
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .quick-day-btn:hover, .quick-day-btn.active {
+      background: rgba(212, 175, 55, 0.15);
+      border-color: var(--border-gold);
+      color: var(--border-gold);
+    }
+
+    /* Spin Button */
+    .spin-trigger-btn {
+      width: 100%;
+      background: var(--gold-gradient);
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 14px;
+      color: #100d05;
+      font-weight: 900;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .spin-trigger-btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(212, 175, 55, 0.5);
+      filter: brightness(1.1);
+    }
+    .spin-trigger-btn:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+    .spin-trigger-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    /* ── Active Challenge Card ── */
+    .challenge-card {
+      background: linear-gradient(145deg, #131d16 0%, #08120b 100%);
+      border: 1.5px solid #143a1f;
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      display: none;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+    }
+    .challenge-card.visible { display: block; }
+    .challenge-tag {
+      font-size: 10px;
+      color: var(--green-casino);
+      letter-spacing: 0.15em;
+      font-weight: 700;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .challenge-title {
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 1.5;
+      margin-bottom: 14px;
+      border-left: 3px solid var(--green-casino);
+      padding-left: 10px;
+    }
+    .challenge-meta {
+      background: rgba(0,0,0,0.4);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      margin-bottom: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .meta-row span:last-child {
+      font-family: monospace;
+      color: var(--text-light);
+      font-weight: 500;
+    }
+    .meta-row.highlight span:last-child {
+      color: var(--green-casino);
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .meta-row.urgent span:last-child {
+      color: #ff9100;
+    }
+    .challenge-btns {
+      display: flex;
+      gap: 10px;
+    }
+    .btn-success, .btn-fail {
+      flex: 1;
+      padding: 12px;
+      border-radius: var(--radius-md);
+      font-weight: 800;
+      font-size: 13px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+    .btn-success {
+      background: var(--green-gradient);
+      color: #000;
+      box-shadow: 0 4px 12px rgba(0, 230, 118, 0.2);
+    }
+    .btn-success:hover {
+      box-shadow: 0 4px 18px rgba(0, 230, 118, 0.4);
+      filter: brightness(1.1);
+    }
+    .btn-fail {
+      background: transparent;
+      color: #ff5252;
+      border-color: rgba(255, 82, 82, 0.3);
+    }
+    .btn-fail:hover {
+      background: rgba(255, 82, 82, 0.08);
+      border-color: #ff5252;
+    }
+
+    /* Hint info */
+    .item-hint {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .item-hint b { color: var(--border-gold); }
+
+    /* ── Modals ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(0,0,0,0.85);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+    @media(min-width:500px) {
+      .modal-overlay { align-items: center; }
+    }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid #30364d;
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      width: 100%;
+      max-width: 440px;
+      max-height: 85dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transform: translateY(40px);
+      transition: transform 0.2s ease;
+    }
+    .modal-overlay.open .modal {
+      transform: translateY(0);
+    }
+    @media(min-width:500px) {
+      .modal {
+        border-radius: var(--radius-lg);
+        transform: scale(0.95);
+        border: 1px solid rgba(212, 175, 55, 0.3);
+      }
+      .modal-overlay.open .modal { transform: scale(1); }
+    }
+
+    .modal-header {
+      padding: 16px;
+      border-bottom: 1px solid #202433;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #11131a;
+    }
+    .modal-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--border-gold);
+    }
+    .modal-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+    .modal-footer {
+      padding: 12px 16px;
+      border-top: 1px solid #202433;
+      display: flex;
+      gap: 8px;
+      background: #11131a;
+    }
+
+    /* Add Row inside Settings */
+    .add-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .add-input {
+      flex: 1;
+      background: #0f1117;
+      border: 1px solid #30364d;
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      font-size: 13px;
+      color: var(--text-light);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .add-input:focus { border-color: var(--border-gold); }
+    .btn-add {
+      background: var(--gold-gradient);
+      color: #000;
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 10px 16px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .list-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .list-meta b { color: var(--border-gold); }
+
+    .settings-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .item-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #1a1d29;
+      border: 1px solid #282e42;
+      border-radius: var(--radius-md);
+      padding: 8px 10px;
+    }
+    .item-num {
+      font-size: 10px;
+      font-family: monospace;
+      color: var(--border-gold);
+      min-width: 18px;
+      text-align: center;
+    }
+    .item-edit-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      font-size: 13px;
+      color: var(--text-light);
+    }
+    .btn-del {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      padding: 4px;
+      border-radius: 4px;
+      transition: all 0.15s;
+    }
+    .btn-del:hover {
+      color: #ff5252;
+      background: rgba(255, 82, 82, 0.1);
+    }
+
+    /* Modal general action buttons */
+    .btn-modal-secondary, .btn-modal-primary {
+      flex: 1;
+      padding: 12px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-modal-secondary {
+      background: transparent;
+      border: 1px solid #30364d;
+      color: var(--text-light);
+    }
+    .btn-modal-secondary:hover { background: #1c2133; }
+    .btn-modal-primary {
+      background: var(--gold-gradient);
+      color: #000;
+      border: none;
+    }
+    .btn-modal-primary:hover { filter: brightness(1.1); }
+    .btn-modal-danger {
+      width: 100%;
+      padding: 12px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      background: transparent;
+      border: 1px solid rgba(255, 82, 82, 0.3);
+      color: #ff5252;
+      transition: all 0.15s;
+    }
+    .btn-modal-danger:hover { background: rgba(255, 82, 82, 0.1); border-color: #ff5252; }
+
+    /* ── History List ── */
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .history-empty {
+      padding: 40px 16px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .history-empty svg { width: 40px; height: 40px; opacity: 0.2; }
+    .history-item {
+      border-radius: var(--radius-md);
+      border: 1px solid;
+      padding: 12px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .history-item.success {
+      background: rgba(0, 230, 118, 0.05);
+      border-color: rgba(0, 230, 118, 0.15);
+    }
+    .history-item.fail {
+      background: rgba(255, 82, 82, 0.05);
+      border-color: rgba(255, 82, 82, 0.15);
+    }
+    .history-item-name {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .history-item-dates {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-family: monospace;
+    }
+    .status-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 20px;
+      border: 1px solid;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .status-badge.success {
+      background: rgba(0, 230, 118, 0.1);
+      border-color: var(--green-casino);
+      color: var(--green-casino);
+    }
+    .status-badge.fail {
+      background: rgba(255, 82, 82, 0.1);
+      border-color: #ff5252;
+      color: #ff5252;
+    }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(8px);
+      background: #11131a;
+      border: 1px solid var(--border-gold);
+      color: var(--text-light);
+      padding: 10px 18px;
+      border-radius: 30px;
+      font-size: 12px;
+      font-weight: 500;
+      z-index: 300;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+    }
+    .toast.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 11px;
+      color: var(--text-muted);
+      border-top: 1px solid #202433;
+      margin-top: auto;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="header-inner">
+    <div class="logo serif">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" style="stroke: url(#goldGradient)"><defs><linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#f3e5ab"/><stop offset="100%" stop-color="#d4af37"/></linearGradient></defs><circle cx="12" cy="12" r="10"/><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="6"/></svg>
+      THE CASINO
+    </div>
+    <div class="header-btns">
+      <button class="icon-btn" id="btnHistory" title="挑戦履歴">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>
+      </button>
+      <button class="icon-btn" id="btnSettings" title="禁止項目を編集">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h.01M12 4h.01M18 12h.01M6 12h.01M12 12h.01M16.24 7.76h.01M7.76 16.24h.01M16.24 16.24h.01M7.76 7.76h.01"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- Main content -->
+<main>
+
+  <!-- Casino Felt Table & Roulette -->
+  <div class="casino-table">
+    <!-- Visual Wheel -->
+    <div class="roulette-container">
+      <svg class="roulette-marker" viewBox="0 0 24 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 28L24 10C24 4.47715 19.5228 0 12 0C4.47715 0 0 4.47715 0 10L12 28Z" fill="#ff4d4d"/>
+        <circle cx="12" cy="10" r="4" fill="#ffffff"/>
+      </svg>
+      <canvas id="rouletteWheel" width="400" height="400"></canvas>
+      <div class="wheel-center-cone serif">BET</div>
+    </div>
+
+    <!-- Live Status Display -->
+    <div class="table-display">
+      <div class="display-status serif" id="tableStatus">PLACE YOUR BETS</div>
+      <div class="display-text" id="tableText">BET（挑戦日数）を決めて<br>スピンを回してください</div>
+    </div>
+
+    <!-- Duration Setup & Spin Control -->
+    <div class="bet-setup">
+      <div class="setup-title serif">CHALLENGE PERIOD (STAKE)</div>
+      <div class="duration-selector">
+        <button class="duration-btn" id="btnDaysDec">—</button>
+        <div class="duration-value-display">
+          <div class="duration-days" id="displayDays">7</div>
+          <div class="duration-label">DAYS</div>
+        </div>
+        <button class="duration-btn" id="btnDaysInc">+</button>
+      </div>
+      
+      <div class="quick-days">
+        <button class="quick-day-btn" data-days="3">3 Days</button>
+        <button class="quick-day-btn active" data-days="7">1 Week</button>
+        <button class="quick-day-btn" data-days="10">10 Days</button>
+        <button class="quick-day-btn" data-days="30">1 Month</button>
+      </div>
+    </div>
+
+    <button class="spin-trigger-btn serif" id="btnSpin">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/></svg>
+      SPIN WHEEL
+    </button>
+  </div>
+
+  <!-- Active Challenge -->
+  <div class="challenge-card" id="challengeCard">
+    <div class="challenge-tag serif">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      ACTIVE BAN MISSION
+    </div>
+    <div class="challenge-title" id="challengeTitle">???</div>
+    <div class="challenge-meta">
+      <div class="meta-row">
+        <span>開始セッション</span>
+        <span id="challengeStart">—</span>
+      </div>
+      <div class="meta-row">
+        <span>終了リミット</span>
+        <span id="challengeEnd">—</span>
+      </div>
+      <div class="meta-row highlight" id="challengeRemainRow">
+        <span>残り期間</span>
+        <span id="challengeRemain">—</span>
+      </div>
+    </div>
+    <div class="challenge-btns">
+      <button class="btn-success" id="btnSuccess">成功（制覇）</button>
+      <button class="btn-fail" id="btnFail">脱落（失敗）</button>
+    </div>
+  </div>
+
+  <div class="item-hint">テーブル上の禁止項目: <b id="itemCount">0</b>個</div>
+</main>
+
+<footer>THE CASINO CHALLENGE &copy; 2026</footer>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="modalSettings">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title serif">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 20h.01M12 4h.01M18 12h.01M6 12h.01M12 12h.01M16.24 7.76h.01M7.76 16.24h.01M16.24 16.24h.01M7.76 7.76h.01"/></svg>
+        禁止項目の編集
+      </div>
+      <button class="icon-btn" id="btnCloseSettings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="add-row">
+      <input class="add-input" id="inputNewItem" type="text" placeholder="新しい禁止ミッションを追加...">
+      <button class="btn-add" id="btnAddItem">追加</button>
+    </div>
+    <div class="list-meta">
+      <span>現在のラインナップ</span>
+      <b id="editCount">0</b>
+    </div>
+    <div class="modal-body">
+      <div class="settings-list" id="settingsList"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal-secondary" id="btnResetDefault">初期状態に戻す</button>
+      <button class="btn-modal-primary" id="btnSaveSettings">保存して適用</button>
+    </div>
+  </div>
+</div>
+
+<!-- History Modal -->
+<div class="modal-overlay" id="modalHistory">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title serif">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>
+        挑戦の戦歴
+      </div>
+      <button class="icon-btn" id="btnCloseHistory">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="history-list" id="historyList"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal-danger" id="btnClearHistory">全戦歴をリセット</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Notice -->
+<div class="toast" id="toast">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+  <span id="toastMsg"></span>
+</div>
+
+<script>
+// ── Web Audio Synth for Premium Casino Sound Effects ──
+const sound = {
+  ctx: null,
+  init() {
+    if (!this.ctx) {
+      this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+  },
+  tick() {
+    this.init();
+    if (!this.ctx) return;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(600, this.ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime + 0.05);
+    
+    gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
+    
+    osc.start();
+    osc.stop(this.ctx.currentTime + 0.05);
+  },
+  win() {
+    this.init();
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.frequency.setValueAtTime(freq, now + idx * 0.1);
+      gain.gain.setValueAtTime(0.06, now + idx * 0.1);
+      gain.gain.linearRampToValueAtTime(0.01, now + idx * 0.1 + 0.2);
+      osc.start(now + idx * 0.1);
+      osc.stop(now + idx * 0.1 + 0.2);
+    });
+  }
+};
+
+const DEFAULT_ITEMS = [
+  "コンビニ禁止（立ち入り自体を禁止）",
+  "コーヒー禁止（紅茶・緑茶など他カフェインはOK）",
+  "お菓子禁止（固形おやつ全般）",
+  "ジュース禁止（砂糖・人工甘味料入りの清涼飲料水）",
+  "YouTube禁止（学習・音楽含むすべて）",
+  "SNS禁止（X・Instagramの閲覧・投稿を完全禁止）",
+  "ポッドキャスト禁止",
+  "サブスク動画禁止（Netflix・Amazon Prime等）",
+  "音楽禁止（無音で過ごす）",
+  "スマホ3時間以上禁止（スクリーンタイム管理）",
+  "プライベートモード禁止（履歴を残さないブラウジング）",
+  "イヤホン禁止（外出時・自宅も含めて遮断を禁止）",
+  "脚組み禁止（姿勢維持）",
+  "グラビア・成人コンテンツ禁止",
+  "ネット小説・イラスト巡回禁止",
+  "外食は初見の店のみ（常連店禁止）",
+  "毎日1枚以上の日常写真撮影の義務化",
+  "お酒禁止（アルコール飲料全般を完全禁止）",
+  "ラーメン禁止（週1回の贅沢・カップ麺もすべて禁止）",
+  "夜更かし禁止（24時以降の起床・スマホ閲覧禁止）"
+];
+
+// ── State Management ──
+let state = {
+  items: [...DEFAULT_ITEMS],
+  active: null,
+  history: [],
+  betDays: 7
+};
+
+let spinning = false;
+let wheelRotation = 0;
+
+// ── DOM References ──
+const $ = id => document.getElementById(id);
+const canvas = $('rouletteWheel');
+const ctx = canvas.getContext('2d');
+const tableStatus = $('tableStatus');
+const tableText = $('tableText');
+const displayDays = $('displayDays');
+const btnSpin = $('btnSpin');
+const challengeCard = $('challengeCard');
+const challengeTitle = $('challengeTitle');
+const challengeStart = $('challengeStart');
+const challengeEnd = $('challengeEnd');
+const challengeRemain = $('challengeRemain');
+const challengeRemainRow = $('challengeRemainRow');
+const itemCount = $('itemCount');
+
+// ── Load & Save ──
+function loadData() {
+  try {
+    const items = localStorage.getItem('casino_items');
+    const active = localStorage.getItem('casino_active');
+    const history = localStorage.getItem('casino_history');
+    const betDays = localStorage.getItem('casino_bet_days');
+    if (items) state.items = JSON.parse(items);
+    if (active) state.active = JSON.parse(active);
+    if (history) state.history = JSON.parse(history);
+    if (betDays) state.betDays = parseInt(betDays, 10) || 7;
+  } catch(e) {}
+}
+
+function saveData() {
+  localStorage.setItem('casino_items', JSON.stringify(state.items));
+  localStorage.setItem('casino_active', JSON.stringify(state.active));
+  localStorage.setItem('casino_history', JSON.stringify(state.history));
+  localStorage.setItem('casino_bet_days', state.betDays);
+}
+
+// ── Date Management ──
+function dateStr(d) {
+  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function remainingDays(endStr) {
+  const end = new Date(endStr);
+  end.setHours(0,0,0,0);
+  const now = new Date();
+  now.setHours(0,0,0,0);
+  return Math.round((end - now) / 86400000);
+}
+
+// ── Draw Visual Canvas Roulette Wheel ──
+function drawWheel() {
+  const numSlices = state.items.length;
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+  const r = cx - 10;
+  
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  if (numSlices === 0) {
+    ctx.fillStyle = '#222';
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('項目を追加してください', cx, cy);
+    return;
+  }
+
+  const sliceAngle = (2 * Math.PI) / numSlices;
+
+  for (let i = 0; i < numSlices; i++) {
+    const angle = i * sliceAngle;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, angle, angle + sliceAngle);
+    ctx.closePath();
+
+    // Alternate Casino colors
+    if (numSlices === 1) {
+      ctx.fillStyle = '#0f5c32'; // Single item gets solid forest green
+    } else if (i === 0) {
+      ctx.fillStyle = '#00c853'; // Index 0 is Lucky Green
+    } else {
+      ctx.fillStyle = (i % 2 === 0) ? '#e01b22' : '#11131a'; // Red / Black
+    }
+    ctx.fill();
+
+    // Gold separator line
+    ctx.strokeStyle = 'rgba(212,175,55,0.4)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Draw item abbreviation text inside slices
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(angle + sliceAngle / 2);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#f5f6f8';
+    ctx.font = numSlices > 15 ? '9px sans-serif' : 'bold 11px sans-serif';
+    
+    // Shorten text to fit slice beautifully
+    let label = state.items[i];
+    if (label.length > 8) label = label.substring(0, 8) + '..';
+    
+    ctx.fillText(label, r - 25, 4);
+    ctx.restore();
+  }
+
+  // Outer brass ring
+  ctx.strokeStyle = '#d4af37';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+  ctx.stroke();
+}
+
+// ── Application UI Render ──
+function render() {
+  itemCount.textContent = state.items.length;
+  displayDays.textContent = state.betDays;
+
+  // Sync active quick days buttons
+  document.querySelectorAll('.quick-day-btn').forEach(btn => {
+    if (parseInt(btn.dataset.days, 10) === state.betDays) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+
+  if (state.active) {
+    challengeCard.classList.add('visible');
+    challengeTitle.textContent = state.active.item;
+    challengeStart.textContent = state.active.startDate;
+    challengeEnd.textContent = `${state.active.endDate} 23:59 まで`;
+
+    const rem = remainingDays(state.active.endDate);
+    if (rem <= 0) {
+      challengeRemain.textContent = '本日最終日！勝利を掴み取れ！';
+      challengeRemainRow.className = 'meta-row urgent';
+    } else {
+      challengeRemain.textContent = `残り ${rem}日`;
+      challengeRemainRow.className = 'meta-row highlight';
+    }
+
+    tableStatus.textContent = "RUNNING MISSION";
+    tableStatus.style.color = "var(--green-casino)";
+    tableText.innerHTML = `<span style="color:var(--border-gold); font-weight:900;">【禁止ミッション進行中】</span><br>${state.active.item}`;
+    btnSpin.disabled = true;
+    btnSpin.innerHTML = `<span style="color:var(--text-muted)">ベット進行中</span>`;
+    
+    // Disable setup controls
+    $('btnDaysDec').disabled = true;
+    $('btnDaysInc').disabled = true;
+  } else if (spinning) {
+    btnSpin.disabled = true;
+    $('btnDaysDec').disabled = true;
+    $('btnDaysInc').disabled = true;
+  } else {
+    challengeCard.classList.remove('visible');
+    tableStatus.textContent = "PLACE YOUR BETS";
+    tableStatus.style.color = "var(--border-gold)";
+    tableText.innerHTML = `BET（挑戦日数）を決めて<br>スピンを回してください`;
+    btnSpin.disabled = false;
+    btnSpin.innerHTML = `SPIN WHEEL`;
+    $('btnDaysDec').disabled = false;
+    $('btnDaysInc').disabled = false;
+  }
+}
+
+// ── Spin Animation ──
+function spinWheel() {
+  if (state.items.length === 0) {
+    showToast('禁止項目がテーブルにありません。設定から追加してください。');
+    return;
+  }
+  
+  spinning = true;
+  render();
+  tableStatus.textContent = "WHEEL SPINNING...";
+  tableStatus.style.color = "#ffeb3b";
+  tableText.textContent = "運命に身を委ねてください...";
+
+  const numSlices = state.items.length;
+  const winningIndex = Math.floor(Math.random() * numSlices);
+  const sliceAngle = 360 / numSlices;
+  
+  // Calculate target rotation angle to match physical indicator at the top (270 degrees)
+  const targetAngle = 360 - (winningIndex * sliceAngle) - (sliceAngle / 2);
+  const totalSpins = 5 * 360; // 5 full rotations
+  const finalRotation = totalSpins + targetAngle;
+  
+  wheelRotation = finalRotation;
+  
+  const wheelEl = $('rouletteWheel');
+  wheelEl.style.transform = `rotate(${finalRotation}deg)`;
+
+  // Tick Sound Sync
+  let currentStep = 0;
+  const totalTicks = 45;
+  const tickInterval = 4000 / totalTicks;
+  
+  const ticker = setInterval(() => {
+    if (currentStep < totalTicks) {
+      sound.tick();
+      currentStep++;
+    } else {
+      clearInterval(ticker);
+    }
+  }, tickInterval);
+
+  setTimeout(() => {
+    spinning = false;
+    sound.win();
+    
+    const selectedItem = state.items[winningIndex];
+    const now = new Date();
+    const end = new Date();
+    end.setDate(now.getDate() + (state.betDays - 1));
+
+    state.active = {
+      item: selectedItem,
+      startDate: dateStr(now),
+      endDate: dateStr(end),
+      days: state.betDays
+    };
+
+    saveData();
+    render();
+    showToast('ルーレット決定！禁止ミッション開始。');
+  }, 4100);
+}
+
+// ── Bet Days Settings ──
+function changeDays(amount) {
+  let temp = state.betDays + amount;
+  if (temp < 1) temp = 1;
+  if (temp > 100) temp = 100;
+  state.betDays = temp;
+  saveData();
+  render();
+}
+
+$('btnDaysDec').addEventListener('click', () => changeDays(-1));
+$('btnDaysInc').addEventListener('click', () => changeDays(1));
+
+document.querySelectorAll('.quick-day-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    if (spinning || state.active) return;
+    state.betDays = parseInt(e.target.dataset.days, 10);
+    saveData();
+    render();
+  });
+});
+
+$('btnSpin').addEventListener('click', () => {
+  if (spinning || state.active) return;
+  spinWheel();
+});
+
+// ── Success / Fail Action handlers ──
+$('btnSuccess').addEventListener('click', () => {
+  if (!state.active) return;
+  state.history.push({ ...state.active, status: 'success' });
+  state.active = null;
+  saveData();
+  render();
+  showToast('見事チャレンジ成功！ディーラーから祝福の拍手です！');
+});
+
+$('btnFail').addEventListener('click', () => {
+  if (!state.active) return;
+  state.history.push({ ...state.active, status: 'fail' });
+  state.active = null;
+  saveData();
+  render();
+  showToast('脱落...。敗者に明日の勝利あれ。');
+});
+
+// ── Settings Management ──
+function renderSettings() {
+  const list = $('settingsList');
+  list.innerHTML = '';
+  state.items.forEach((item, i) => {
+    const row = document.createElement('div');
+    row.className = 'item-row';
+    row.innerHTML = `
+      <span class="item-num">${i+1}</span>
+      <input class="item-edit-input" type="text" value="${item.replace(/"/g, '&quot;')}" data-idx="${i}">
+      <button class="btn-del" data-idx="${i}" title="この項目を配牌から削除">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6m4-6v6"/><path d="M9 6V4h6v2"/></svg>
+      </button>
+    `;
+    list.appendChild(row);
+  });
+
+  // 削除ボタンのイベントリスナー
+  list.querySelectorAll('.btn-del').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const idx = parseInt(e.currentTarget.dataset.idx, 10);
+      state.items.splice(idx, 1);
+      renderSettings();
+    });
+  });
+
+  $('editCount').textContent = `${state.items.length} 項目`;
+}
+
+function openModal(id) { $(id).classList.add('open'); }
+function closeModal(id) { $(id).classList.remove('open'); }
+
+$('btnSettings').addEventListener('click', () => {
+  renderSettings();
+  openModal('modalSettings');
+});
+$('btnCloseSettings').addEventListener('click', () => closeModal('modalSettings'));
+
+// 保存して適用する際に、現在の全インプットの値から state.items を一括更新
+$('btnSaveSettings').addEventListener('click', () => {
+  const inputs = document.querySelectorAll('.item-edit-input');
+  const newItems = [];
+  inputs.forEach(input => {
+    const val = input.value.trim();
+    if (val) {
+      newItems.push(val);
+    }
+  });
+
+  if (newItems.length === 0) {
+    showToast('少なくとも1つの禁止項目を登録してください。');
+    return;
+  }
+
+  state.items = newItems;
+  saveData();
+  render();
+  drawWheel();
+  closeModal('modalSettings');
+  showToast('テーブルセッティングを保存しました');
+});
+
+$('btnResetDefault').addEventListener('click', () => {
+  if (confirm('テーブルをカジノのクラシックセッティング（初期の20項目）に戻しますか？')) {
+    state.items = [...DEFAULT_ITEMS];
+    renderSettings();
+    showToast('初期設定を読み込みました。「保存して適用」を押すと反映されます。');
+  }
+});
+
+$('btnAddItem').addEventListener('click', () => {
+  const input = $('inputNewItem');
+  const val = input.value.trim();
+  if (!val) return;
+  
+  state.items.push(val);
+  input.value = '';
+  renderSettings();
+  showToast('ミッションを追加しました。「保存して適用」を押すと反映されます。');
+});
+
+$('inputNewItem').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    $('btnAddItem').click();
+  }
+});
+
+// ── History Management ──
+function renderHistory() {
+  const list = $('historyList');
+  if (state.history.length === 0) {
+    list.innerHTML = `
+      <div class="history-empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        <span>ゲームがまだ行われていません</span>
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = '';
+  [...state.history].reverse().forEach(h => {
+    const el = document.createElement('div');
+    el.className = `history-item ${h.status}`;
+    const badge = h.status === 'success'
+      ? `<span class="status-badge success">制覇 [${h.days}日]</span>`
+      : `<span class="status-badge fail">脱落 [${h.days}日]</span>`;
+    
+    el.innerHTML = `
+      <div>
+        <div class="history-item-name">${h.item}</div>
+        <div class="history-item-dates">${h.startDate} 〜 ${h.endDate}</div>
+      </div>
+      ${badge}
+    `;
+    list.appendChild(el);
+  });
+}
+
+$('btnHistory').addEventListener('click', () => {
+  renderHistory();
+  openModal('modalHistory');
+});
+$('btnCloseHistory').addEventListener('click', () => closeModal('modalHistory'));
+
+$('btnClearHistory').addEventListener('click', () => {
+  if (confirm('本当にすべての戦歴を破棄しますか？')) {
+    state.history = [];
+    saveData();
+    renderHistory();
+    showToast('戦歴をすべてクリアしました');
+  }
+});
+
+// Close modals when clicking overlay
+window.addEventListener('click', (e) => {
+  if (e.target.classList.contains('modal-overlay')) {
+    closeModal(e.target.id);
+  }
+});
+
+// ── Toast Utility ──
+let toastTimer;
+function showToast(msg) {
+  const t = $('toast');
+  $('toastMsg').textContent = msg;
+  t.classList.add('visible');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('visible'), 3000);
+}
+
+// ── Initialize App ──
+loadData();
+render();
+drawWheel();
+</script>
+</body>
+</html>
